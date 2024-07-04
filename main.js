@@ -1,14 +1,21 @@
+console.time("timer")
 const electron = require('electron');
 const { app, BrowserWindow } = electron
 const path = require('path')
 require('dotenv').config()
 
+let mainWindow, loadingWindow
+
+app.whenReady().then(main);
 
 
-function createWindow() {
+async function main() {
+    createLoadingWindow()
+
     const mainWindow = new BrowserWindow({
         width: 1000,
         height: 700,
+        show: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
@@ -16,35 +23,30 @@ function createWindow() {
 
         }
     })
-
-    //mainWindow.webContents.openDevTools()
-
-
-
-
     mainWindow.loadURL(process.env.START_URL)
+    mainWindow.on("ready-to-show", () => {
+        setTimeout(() => {
+            loadingWindow.close();
+            mainWindow.show();
+            console.timeEnd("timer")
+
+        }, 3000)
+    })
 
 
 }
 
+function createLoadingWindow() {
+    loadingWindow = new BrowserWindow({
+        width: 400,
+        height: 300,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
 
-
-app.whenReady().then(() => {
-    createWindow()
-
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-
-            createWindow()
-        }
     })
-})
-
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
-})
+    loadingWindow.loadFile('loading.html')
+}
 
 
 
